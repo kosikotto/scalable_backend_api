@@ -1,0 +1,66 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    ports:
+      - "5432:5432"
+
+  keycloak:
+    container_name: keycloak-java-webshop
+    image: quay.io/keycloak/keycloak:26.4.5
+    command: start-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/postgres
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=${DB_PASSWORD}
+      - KC_HOSTNAME=http://keycloak:8080
+      - KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true
+    volumes:
+      - db-keycloak-data:/opt/keycloak/data
+    depends_on:
+      - postgres
+    networks:
+      - backend-net
+
+  cache_db:
+    image: redis:7-alpine
+    container_name: cache_db
+    networks:
+      - backend-net
+    ports:
+      - "6379:6379"
+
+  backend:
+    image: webshop-backend-java
+    container_name: backend
+    environment:
+      - SPRING_DATA_REDIS_HOST=${CACHE_HOST}
+      - SPRING_DATA_REDIS_PORT=${CACHE_PORT}
+    depends_on:
+      - postgres
+      - keycloak
+      - cache_db
+    networks:
+      - backend-net
+    ports:
+      - "8081:8081"
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  db-postgres-data:
+  db-keycloak-data:
