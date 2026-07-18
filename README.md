@@ -100,6 +100,112 @@ A projekt futtatásához Docker Desktop megléte szükséges. A szolgáltatások
 
 ***
 
+🔐 Keycloak Konfiguráció és Hitelesítés (RBAC)
+
+Az alkalmazás végpontjai (például a POST /add/{product}) szerepkör-alapú jogosultságkezeléssel (RBAC) vannak védve. Ahhoz, hogy a Swagger UI-ból sikeresen tesztelni tudd a végpontokat, a Keycloak admin felületén az alábbi egyszeri beállításokat kell elvégezni.
+
+1. Realm létrehozása
+
+    A backend kód a "webshop" nevű realm-et várja a tokenek hitelesítéséhez.
+
+        Lépj be a Keycloak Admin Console-ba (http://localhost:8080, alapértelmezett belépés: admin / admin).
+
+        A bal felső sarokban kattints a "Keycloak" (vagy master) legördülő menüre.
+
+        Kattints a "Create Realm" gombra.
+
+        Realm name: Írd be, hogy "webshop", majd kattints a Create gombra.
+
+2. Szerepkör (Realm Role) létrehozása
+
+    A rendszer a "postput" szerepkört (Role) vizsgálja az adatmódosító végpontoknál.
+
+        A bal oldali menüben válaszd a "Realm roles" menüpontot.
+
+        Kattints a "Create role" gombra.
+
+        Role name: "postput"
+
+        Kattints a "Save" gombra.
+
+3. Kliens (Client) beállítása a Swaggerhez
+
+   Ahhoz, hogy a Swagger UI tokent tudjon kérni a Keycloaktól, regisztrálnunk kell egy klienst, és engedélyeznünk kell a megfelelő hitelesítési folyamatokat.
+
+        A bal oldali menüben: "Clients" -> "Create client".
+
+        Client ID: "webshop-api" (Ezt kell majd a Swagger login felületén megadni).
+
+        Client authentication: Maradjon kikapcsolva (Public kliensként használjuk).
+
+        Kattints a "Next"-re.
+
+        Valid redirect URIs: Ezt nagyon pontosan kell megadni! Írd be: http://localhost:8081/swagger-ui/* és http://localhost:8081/*
+
+        Web origins: + (vagy http://localhost:8081).
+
+        Kattints a "Save" gombra.
+
+        FONTOS (Direct Access engedélyezése): A sikeres mentés után görgess le a kliens beállításainál a "Capability config" részhez. Keresd meg a "Direct access grants" kapcsolót, és kapcsold BE (a "Standard flow" is maradjon bekapcsolva). Ez teszi lehetővé, hogy a Swagger API-n keresztül jelentkezzen be. Mentsd el a módosításokat!
+
+5. Felhasználók létrehozása és véglegesítése
+
+    A teszteléshez két felhasználót hozunk létre: egy adminisztrátort (aki tud terméket hozzáadni) és egy sima usert (akinek a rendszer megtagadja a hozzáférést).
+
+    ⚠️ Figyelem: A rendszer megköveteli a felhasználói profilok hiánytalan kitöltését, különben "Account is not fully set up" hibát kapunk a Swaggerben!
+
+    A) Jogosult felhasználó (Admin) létrehozása:
+
+       Bal oldali menü: Users -> Add user.
+       Username: admin_user
+       Email: admin@teszt.hu (Dummy adat kötelező)
+       First name: Admin (Dummy adat kötelező)
+       Last name: Teszt (Dummy adat kötelező)
+       Kattints a "Create" gombra.
+    
+    A létrehozott felhasználó adatlapján menj a "Credentials" fülre, és kattints a "Set password" gombra.
+
+    Adj meg egy jelszót (pl. 1234), a "Temporary" kapcsolót pedig kapcsold KI!
+
+    Kattints a "Save"-re.
+
+    Menj a "Role mapping" fülre, kattints az "Assign role" gombra, válaszd ki a "postput" szerepkört, és kattints az "Assign"-ra.
+
+    B) Sima felhasználó (Jogosultság nélküli) létrehozása:
+
+        Bal oldali menü: Users -> Add user.
+
+        Username: sima_user
+
+        Töltsd ki a kötelező adatokat (Email, First name, Last name dummy adatokkal).
+
+        Kattints a "Create" gombra.
+
+    "Credentials" fülön adj neki jelszót (pl. 1234, Temporary: KI).
+
+    ❌ Ennek a felhasználónak NE adj semmilyen extra Role-t!
+
+***
+
+🧪 Hitelesítés és Jogosultságok Tesztelése (Swagger UI)
+
+Most, hogy a Keycloak fel van készítve, tesztelhetjük az API működését és a biztonsági korlátozásokat.
+
+1. Nyisd meg a Swaggert: http://localhost:8081/swagger-ui.html
+2. Kattints a felső, zöld "Authorize" gombra.
+3. A "client_id" mezőbe írd be: webshop-api
+4. Teszt 1: Sikeres hozzáférés (Admin)
+5. Jelentkezz be az admin_user / 1234 adatokkal.
+6. Keresd meg a "POST /add/{product}" végpontot (pl. próbáld meg hozzáadni: szappan).
+7. Eredmény: A rendszer be fog engedni, a válaszkód 200 OK.
+8. Teszt 2: Megtagadott hozzáférés (Sima User)
+9. A Swaggerben kattints a "Logout" gombra, majd az "Authorize"-ra újra.
+10. Most jelentkezz be a sima_user / 1234 adatokkal.
+11. Próbáld meg ismét meghívni a "POST /add/{product}" végpontot.
+12. Eredmény: Mivel a sima user nem rendelkezik a postput szerepkörrel, a Spring Security helyesen blokkolja a kérést, a válaszkód 403 Forbidden lesz! Ezzel bizonyítva, hogy a végpontok védelme tökéletesen működik.
+
+***
+
 🌐 Elérhetőségek és Portok
 A sikeres indítást követően a rendszer egyes komponensei az alábbi helyi címeken és portokon válnak elérhetővé:
 
