@@ -169,7 +169,7 @@ Az alkalmazás végpontjai (például a POST /add/{product}) szerepkör-alapú j
 
     Kattints a "Save"-re.
 
-    Menj a "Role mapping" fülre, kattints az "Assign role" gombra, válaszd ki a "postput" szerepkört, és kattints az "Assign"-ra.
+    Menj a "Role mapping" fülre, kattints az "Assign role" gombra, majd a "Realm roles"-ra, válaszd ki a "postput" szerepkört, és kattints az "Assign"-ra.
 
     B) Sima felhasználó (Jogosultság nélküli) létrehozása:
 
