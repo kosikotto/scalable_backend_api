@@ -34,6 +34,7 @@ A projekt felépítése és a komponensek elhelyezkedése a következő elrendez
 │
 └── 📁 Compose
     ├── 📄 .env                  # Környezeti változók (jelszavak, portok)
+    ├── 📄 init.sql              # Adatbázis automatikus létrehozásáért felelős script
     └── 📄 docker-compose.yaml   # A teljes infrastruktúra konfigurációja
 ```
 
@@ -174,11 +175,10 @@ Az alkalmazás végpontjai (például a POST /add/{product}) szerepkör-alapú j
     B) Sima felhasználó (Jogosultság nélküli) létrehozása:
 
         Bal oldali menü: Users -> Add user.
-
         Username: sima_user
-
-        Töltsd ki a kötelező adatokat (Email, First name, Last name dummy adatokkal).
-
+        Email: sima@teszt.hu (Dummy adat kötelező)
+        First name: Sima (Dummy adat kötelező)
+        Last name: Teszt (Dummy adat kötelező)
         Kattints a "Create" gombra.
 
     "Credentials" fülön adj neki jelszót (pl. 1234, Temporary: KI).
